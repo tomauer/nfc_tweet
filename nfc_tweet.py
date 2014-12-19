@@ -2,9 +2,12 @@
 import os
 import admin
 import threading
+import twitter
 
 #dependencies
 #pywin32
+#scipy
+#python-twitter
 
 if not admin.isUserAdmin():
         admin.runAsAdmin()
@@ -20,7 +23,15 @@ callpath = 'C:\\temp\\calls'
 existing = os.listdir(callpath)
 
 def tweet(tweetset):
-	print tweetset
+	global callpath
+	for f in tweetset:
+		print f
+		fs, frames = wavfile.read(f)
+
+		channels = [
+			np.array(frames[:, 0]),
+			np.array(frames[:, 1])
+		]
 
 def callme():
 	global existing
