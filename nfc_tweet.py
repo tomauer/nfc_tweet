@@ -3,6 +3,7 @@ import os
 import admin
 import threading
 import twitter
+from scipy.io import wavfile
 
 #dependencies
 #pywin32
@@ -26,14 +27,9 @@ def tweet(tweetset):
 	global callpath
 	for f in tweetset:
 		print f
-		fs, frames = wavfile.read(f)
-
-		channels = [
-			np.array(frames[:, 0]),
-			np.array(frames[:, 1])
-		]
 
 def callme():
+	print 'calling'
 	global existing
 	threading.Timer(5.0, callme).start()
 	print 'lists'
