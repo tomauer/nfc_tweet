@@ -8,6 +8,8 @@ import numpy
 import matplotlib
 import pylab
 import soundcloud
+import ephem
+import datetime
 from scipy.io import wavfile
 from matplotlib import cm
 
@@ -21,6 +23,14 @@ from matplotlib import cm
 #python-dateutil
 #pyparsing
 #soundcloud
+#PyEphem
+
+##TODO
+#astronomical dawn/dusk start/stop
+#25 tweets per 15 minute rate limit check + rain/wind check
+#code convention
+#add timestamping
+#tweak spectrogram
 
 if not admin.isUserAdmin():
         admin.runAsAdmin()
@@ -34,6 +44,8 @@ os.startfile(r"C:\My Recordings\Tseep-r.exe")
 
 callpath = 'C:\\temp\\calls'
 existing = os.listdir(callpath)
+
+running = False
 
 #auth soundcloud
 scclient = soundcloud.Client(
@@ -107,9 +119,26 @@ def callme():
 		acton = set(os.listdir(callpath)) - set(existing)
 		tweet(acton)
 		existing = os.listdir(callpath)
-		
+	
+def check_running():
+	global running
+	
+	now = datetime.utcnow()
 
-callme()
+	ri = ephem.Observer()
+	ri.lat = '41.38'
+	ri.lon = '-71.61'
+	ri.elev = 10
+	ri.pressure = 0
+	ri.horizon = '-18'
+	ri.date = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+	
+	if running:
+		time_to_stop()
+	else:
+		time_to_start()
+		
+#callme()
 
 ##use ravenpro to create spectrogram
 ##upload to soundcloud?
