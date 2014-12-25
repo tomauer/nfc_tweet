@@ -51,6 +51,8 @@ api = twitter.Api(
 	access_token_secret=config.access_token_secret
 )
 
+print api.VerifyCredentials()
+
 def makeimg(wav):
 	global callpath
 
