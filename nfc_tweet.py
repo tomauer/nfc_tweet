@@ -35,6 +35,22 @@ os.startfile(r"C:\My Recordings\Tseep-r.exe")
 callpath = 'C:\\temp\\calls'
 existing = os.listdir(callpath)
 
+#auth soundcloud
+scclient = soundcloud.Client(
+    client_id=config.client_id,
+    client_secret=config.client_secret,
+    username=config.username,
+    password=config.password
+)
+
+#auth twitter
+api = twitter.Api(
+	consumer_key=config.consumer_key, 
+	consumer_secret=config.consumer_secret, 
+	access_token_key=config.access_token_key, 
+	access_token_secret=config.access_token_secret
+)
+
 def makeimg(wav):
 	global callpath
 
@@ -51,11 +67,32 @@ def makeimg(wav):
 		cmap=cm.gray_r)
 
 	pylab.savefig(os.path.join(callpath, wav.replace(".wav",".png")))
+	
+	return os.path.join(callpath, wav.replace(".wav",".png"))
 
+def upload_to_soundcloud(wav):
+	print 'heading to soundcloud'
+	global callpath
+	global config
+	global scclient
+	track = scclient.post(
+		'/tracks', 
+		track={
+			'title': 'This is a sample track',
+			'sharing': 'public',
+			'asset_data': open(os.path.join(callpath, wav), 'rb')
+			}
+		)
+	
+	return track.permalink_url
+	
 def tweet(tweetset):
 	global callpath
+	global api
 	for f in tweetset:
-		makeimg(f)
+		img_path = makeimg(f)
+		wav_path = upload_to_soundcloud(f)
+		status = api.PostMedia("Test tweet with link. " + wav_path,img_path)
 
 def callme():
 	print 'calling'
