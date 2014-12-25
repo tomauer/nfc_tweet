@@ -3,10 +3,12 @@ import os
 import admin
 import threading
 import twitter
+import config
 from scipy.io import wavfile
 
 #dependencies
 #pywin32
+#numpy
 #scipy
 #python-twitter
 
