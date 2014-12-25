@@ -4,13 +4,23 @@ import admin
 import threading
 import twitter
 import config
+import numpy
+import matplotlib
+import pylab
+import soundcloud
 from scipy.io import wavfile
+from matplotlib import cm
 
 #dependencies
 #pywin32
 #numpy
 #scipy
 #python-twitter
+#matplotlib
+#six
+#python-dateutil
+#pyparsing
+#soundcloud
 
 if not admin.isUserAdmin():
         admin.runAsAdmin()
@@ -25,10 +35,27 @@ os.startfile(r"C:\My Recordings\Tseep-r.exe")
 callpath = 'C:\\temp\\calls'
 existing = os.listdir(callpath)
 
+def makeimg(wav):
+	global callpath
+
+	fs, frames = wavfile.read(os.path.join(callpath, wav))
+
+	# generate specgram
+	pylab.specgram(
+		frames,
+		NFFT=256, 
+		Fs=44100, 
+		detrend=pylab.detrend_none,
+		window=pylab.window_hanning,
+		noverlap=int(44100 * 0.0025),
+		cmap=cm.gray_r)
+
+	pylab.savefig(os.path.join(callpath, wav.replace(".wav",".png")))
+
 def tweet(tweetset):
 	global callpath
 	for f in tweetset:
-		print f
+		makeimg(f)
 
 def callme():
 	print 'calling'
