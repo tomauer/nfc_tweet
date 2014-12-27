@@ -12,6 +12,7 @@ import ephem
 from datetime import datetime
 from scipy.io import wavfile
 from matplotlib import cm
+from time import localtime
 
 #dependencies
 #pywin32
@@ -26,11 +27,11 @@ from matplotlib import cm
 #PyEphem
 
 ##TODO
+#tweak spectrogram
 #test astronomical dawn/dusk start/stop
 #25 tweets per 15 minute rate limit check + rain/wind check
 #code convention
-#add timestamping
-#tweak spectrogram
+
 
 if not admin.isUserAdmin():
         admin.runAsAdmin()
@@ -40,6 +41,18 @@ dirpath = 'C:\\'
 existing = os.listdir(callpath)
 
 running = False
+
+def parse_file_name(file):
+	sp = file.split("_")
+	lt = localtime()
+	tz = ''
+	
+	if lt.tm_isdst == 0:
+		tz = 'EST'
+	else:
+		tz = 'EDT'
+	
+	return sp[0]+" at "+sp[2]+" "+tz+" on "+sp[1]+"."
 
 def makeimg(wav):
 	global callpath
@@ -123,6 +136,7 @@ def start_tseep():
 			os.rename(os.path.join(dirpath, filename), os.path.join(dirpath, "go.txt"))
 			
 	os.startfile(r"C:\My Recordings\Tseep-r.exe")
+	os.startfile(r"C:\My Recordings\Thrush-r.exe")
 	
 	callme()
 			
@@ -171,7 +185,6 @@ def check_running():
 			start_tseep()
 
 def check_time():
-	print 'checking time'
 	threading.Timer(60.0, check_time).start()
 	
 	check_running()
