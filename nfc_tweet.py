@@ -28,6 +28,7 @@ from time import localtime
 
 ##TODO
 #tweak spectrogram
+###fill the edges
 #test astronomical dawn/dusk start/stop
 #25 tweets per 15 minute rate limit check + rain/wind check
 #code convention
@@ -60,14 +61,21 @@ def makeimg(wav):
 	fs, frames = wavfile.read(os.path.join(callpath, wav))
 
 	# generate specgram
+	pylab.figure(1)
+	
+	# generate specgram
 	pylab.specgram(
 		frames,
 		NFFT=256, 
-		Fs=44100, 
+		Fs=22050, 
 		detrend=pylab.detrend_none,
-		window=pylab.window_hanning,
-		noverlap=int(44100 * 0.0025),
-		cmap=cm.gray_r)
+		window=numpy.hamming(256),
+		noverlap=192,
+		cmap=pylab.get_cmap('Greys'))
+		
+	pylab.title("Tester")
+	pylab.ylim([0,11025])
+	#pylab.xlim(x_width_array)
 
 	pylab.savefig(os.path.join(callpath, wav.replace(".wav",".png")))
 	
