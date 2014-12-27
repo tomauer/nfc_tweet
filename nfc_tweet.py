@@ -9,7 +9,7 @@ import matplotlib
 import pylab
 import soundcloud
 import ephem
-import datetime
+from datetime import datetime
 from scipy.io import wavfile
 from matplotlib import cm
 
@@ -26,7 +26,7 @@ from matplotlib import cm
 #PyEphem
 
 ##TODO
-#astronomical dawn/dusk start/stop
+#test astronomical dawn/dusk start/stop
 #25 tweets per 15 minute rate limit check + rain/wind check
 #code convention
 #add timestamping
@@ -34,36 +34,12 @@ from matplotlib import cm
 
 if not admin.isUserAdmin():
         admin.runAsAdmin()
-        
-#check to see what time it is
-#if time is after astronomical twilight, start Tseep-r
-
-#start Tseep-r
-os.startfile(r"C:\My Recordings\Tseep-r.exe")
-#subprocess.call(['C:\\My Recordings\\Tseep-r.exe'])
 
 callpath = 'C:\\temp\\calls'
+dirpath = 'C:\\'
 existing = os.listdir(callpath)
 
 running = False
-
-#auth soundcloud
-scclient = soundcloud.Client(
-    client_id=config.client_id,
-    client_secret=config.client_secret,
-    username=config.username,
-    password=config.password
-)
-
-#auth twitter
-api = twitter.Api(
-	consumer_key=config.consumer_key, 
-	consumer_secret=config.consumer_secret, 
-	access_token_key=config.access_token_key, 
-	access_token_secret=config.access_token_secret
-)
-
-print api.VerifyCredentials()
 
 def makeimg(wav):
 	global callpath
@@ -119,8 +95,46 @@ def callme():
 		acton = set(os.listdir(callpath)) - set(existing)
 		tweet(acton)
 		existing = os.listdir(callpath)
+
+def start_tseep():
+	global dirpath
+	#rename file to stop.txt
 	
+	#auth soundcloud
+	scclient = soundcloud.Client(
+		client_id=config.client_id,
+		client_secret=config.client_secret,
+		username=config.username,
+		password=config.password
+	)
+
+	#auth twitter
+	api = twitter.Api(
+		consumer_key=config.consumer_key, 
+		consumer_secret=config.consumer_secret, 
+		access_token_key=config.access_token_key, 
+		access_token_secret=config.access_token_secret
+	)
+	
+	print api.VerifyCredentials()
+	
+	for filename in os.listdir('C:\\'):
+		if filename.startswith("stop"):
+			os.rename(os.path.join(dirpath, filename), os.path.join(dirpath, "go.txt"))
+			
+	os.startfile(r"C:\My Recordings\Tseep-r.exe")
+	
+	callme()
+			
+def stop_tseep():
+	global dirpath
+	#rename file to stop.txt
+	for filename in os.listdir('C:\\'):
+	    if filename.startswith("go"):
+	        os.rename(os.path.join(dirpath, filename), os.path.join(dirpath, "stop.txt"))
+		
 def check_running():
+	print 'check running'
 	global running
 	
 	now = datetime.utcnow()
@@ -133,32 +147,33 @@ def check_running():
 	ri.horizon = '-18'
 	ri.date = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 	
+	previous_set = ri.previous_setting(ephem.Sun(), use_center=True)
+	next_rise = ri.next_rising(ephem.Sun(), use_center=True)
+	previous_rise = ri.previous_rising(ephem.Sun(), use_center=True)
+	next_set = ri.next_setting(ephem.Sun(), use_center=True)
+
+	fmt = "%Y/%m/%d %H:%M:%S"
+
+	next_set_time = datetime.strptime(str(next_set), fmt)
+	next_rise_time = datetime.strptime(str(next_rise), fmt)
+	prev_set_time = datetime.strptime(str(previous_set), fmt)
+	prev_rise_time = datetime.strptime(str(previous_rise), fmt)
+	
 	if running:
-		time_to_stop()
+		if (prev_rise_time.day == now.day) & \
+		(now >= prev_rise_time) & \
+		(now <= next_set_time):
+			stop_tseep()
 	else:
-		time_to_start()
-		
-#callme()
+		if (prev_set_time.day == now.day) & \
+		(now >= prev_set_time) & \
+		(now <= next_rise_time):
+			start_tseep()
 
-##use ravenpro to create spectrogram
-##upload to soundcloud?
-#if more than 10 new files within 15 seconds, shut down for an hour
+def check_time():
+	print 'checking time'
+	threading.Timer(60.0, check_time).start()
+	
+	check_running()
 
-#if after astronomical twilight, turn off
-
-#stop and reset Tseep-r
-#need to turn off UAC so that pop up window doesn't prevent workflow
-dirpath = 'C:\\'
-
-#rename file to stop.txt
-#for filename in os.listdir('C:\\'):
-#       if filename.startswith("go"):
-#               print filename
-#               os.rename(os.path.join(dirpath, filename), os.path.join(dirpath, "stop.txt"))
-
-
-#rename file to go.txt
-#for filename in os.listdir('C:\\'):
-#       if filename.startswith("stop"):
-#               print filename
-#               os.rename(os.path.join(dirpath, filename), os.path.join(dirpath, "go.txt"))
+check_time()
