@@ -1,4 +1,5 @@
 #program to tweet nfcs
+from __future__ import division
 import os
 import admin
 import threading
@@ -27,10 +28,9 @@ from time import localtime
 #PyEphem
 
 ##TODO
-#tweak spectrogram
-###fill the edges
 #test astronomical dawn/dusk start/stop
 #25 tweets per 15 minute rate limit check + rain/wind check
+#verification
 #code convention
 
 
@@ -72,10 +72,12 @@ def makeimg(wav):
 		window=numpy.hamming(256),
 		noverlap=192,
 		cmap=pylab.get_cmap('Greys'))
-		
+	
+	x_width = len(frames)/fs
+	
 	pylab.title("Tester")
 	pylab.ylim([0,11025])
-	#pylab.xlim(x_width_array)
+	pylab.xlim([0,round(x_width,3)-0.006])
 
 	pylab.savefig(os.path.join(callpath, wav.replace(".wav",".png")))
 	
