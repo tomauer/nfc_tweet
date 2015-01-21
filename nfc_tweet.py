@@ -30,8 +30,6 @@ from time import localtime
 #PyEphem
 
 ##TODO
-#getting errors in makeimg, because the folder is seeing the image files
-###either move image files to a different folder or ignore that extension
 #25 tweets per 15 minute rate limit check + rain/wind check
 #verification
 #code convention
@@ -41,6 +39,7 @@ if not admin.isUserAdmin():
         admin.runAsAdmin()
 
 callpath = 'C:\\temp\\calls'
+imgpath = 'C:\\temp\\imgs'
 dirpath = 'C:\\'
 existing = os.listdir(callpath)
 
@@ -65,6 +64,7 @@ def parse_file_name(file):
 
 def makeimg(wav):
 	global callpath
+	global imgpath
 
 	fs, frames = wavfile.read(os.path.join(callpath, wav))
 
@@ -86,7 +86,7 @@ def makeimg(wav):
 	pylab.ylim([0,11025])
 	pylab.xlim([0,round(x_width,3)-0.006])
 	
-	img_path = os.path.join(callpath, wav.replace(".wav",".png"))
+	img_path = os.path.join(imgpath, wav.replace(".wav",".png"))
 
 	pylab.savefig(img_path)
 	
