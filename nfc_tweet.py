@@ -14,6 +14,7 @@ import calendar
 from datetime import datetime, timedelta
 from scipy.io import wavfile
 from matplotlib import cm
+from time import localtime
 
 
 #dependencies
@@ -29,6 +30,8 @@ from matplotlib import cm
 #PyEphem
 
 ##TODO
+#start/stop doesn't work
+#getting errors in makeimg
 #25 tweets per 15 minute rate limit check + rain/wind check
 #verification
 #code convention
@@ -42,6 +45,11 @@ dirpath = 'C:\\'
 existing = os.listdir(callpath)
 
 running = False
+
+api = ""
+scclient = ""
+timer15 = 0
+tweets = 0
 
 def parse_file_name(file):
 	sp = file.split("_")
@@ -75,13 +83,14 @@ def makeimg(wav):
 	
 	x_width = len(frames)/fs
 	
-	pylab.title("Tester")
 	pylab.ylim([0,11025])
 	pylab.xlim([0,round(x_width,3)-0.006])
-
-	pylab.savefig(os.path.join(callpath, wav.replace(".wav",".png")))
 	
-	return os.path.join(callpath, wav.replace(".wav",".png"))
+	img_path = os.path.join(callpath, wav.replace(".wav",".png"))
+
+	pylab.savefig(img_path)
+	
+	return img_path
 
 def upload_to_soundcloud(wav):
 	print 'heading to soundcloud'
@@ -110,17 +119,33 @@ def tweet(tweetset):
 def callme():
 	print 'calling'
 	global existing
+	global timer15
+	global tweets
 	threading.Timer(5.0, callme).start()
-	print 'lists'
+	
+	print 'timer15'
+	print timer15
+	
+	if timer15 == 900:
+		timer15 = 0
+		tweets = 0
+	else:
+		timer15+=5
 	
 	if len(existing) != len(os.listdir(callpath)):
 		print 'not equal, action'
 		acton = set(os.listdir(callpath)) - set(existing)
 		tweet(acton)
+		tweets+=len(acton)
 		existing = os.listdir(callpath)
+		
+		if (timer15 < 900) & (tweets >= 21):
+			print 'take a break'
 
 def start_tseep():
 	global dirpath
+	global scclient
+	global api
 	print 'start'
 	#rename file to stop.txt
 	
@@ -193,6 +218,7 @@ def check_running():
 	prev_rise_time = datetime.strptime(str(previous_rise), fmt)
 	
 	if running:
+		#this isn't working
 		if (utc_to_local(prev_rise_time).day == utc_to_local(now).day) & \
 		(now >= prev_rise_time) & \
 		(now <= next_set_time):
@@ -202,6 +228,7 @@ def check_running():
 		(now >= prev_set_time) & \
 		(now <= next_rise_time):
 			start_tseep()
+			running = True
 
 def check_time():
 	threading.Timer(60.0, check_time).start()
