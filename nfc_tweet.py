@@ -10,10 +10,11 @@ import matplotlib
 import pylab
 import soundcloud
 import ephem
-from datetime import datetime
+import calendar
+from datetime import datetime, timedelta
 from scipy.io import wavfile
 from matplotlib import cm
-from time import localtime
+
 
 #dependencies
 #pywin32
@@ -28,7 +29,6 @@ from time import localtime
 #PyEphem
 
 ##TODO
-#test astronomical dawn/dusk start/stop
 #25 tweets per 15 minute rate limit check + rain/wind check
 #verification
 #code convention
@@ -121,6 +121,7 @@ def callme():
 
 def start_tseep():
 	global dirpath
+	print 'start'
 	#rename file to stop.txt
 	
 	#auth soundcloud
@@ -152,11 +153,19 @@ def start_tseep():
 			
 def stop_tseep():
 	global dirpath
+	print 'stop'
 	#rename file to stop.txt
 	for filename in os.listdir('C:\\'):
 	    if filename.startswith("go"):
 	        os.rename(os.path.join(dirpath, filename), os.path.join(dirpath, "stop.txt"))
-		
+	
+def utc_to_local(utc_dt):
+    # get integer timestamp to avoid precision lost
+    timestamp = calendar.timegm(utc_dt.timetuple())
+    local_dt = datetime.fromtimestamp(timestamp)
+    assert utc_dt.resolution >= timedelta(microseconds=1)
+    return local_dt.replace(microsecond=utc_dt.microsecond)
+	
 def check_running():
 	print 'check running'
 	global running
@@ -184,12 +193,12 @@ def check_running():
 	prev_rise_time = datetime.strptime(str(previous_rise), fmt)
 	
 	if running:
-		if (prev_rise_time.day == now.day) & \
+		if (utc_to_local(prev_rise_time).day == utc_to_local(now).day) & \
 		(now >= prev_rise_time) & \
 		(now <= next_set_time):
 			stop_tseep()
 	else:
-		if (prev_set_time.day == now.day) & \
+		if (utc_to_local(prev_set_time).day == utc_to_local(now).day) & \
 		(now >= prev_set_time) & \
 		(now <= next_rise_time):
 			start_tseep()
