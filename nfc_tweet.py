@@ -30,8 +30,8 @@ from time import localtime
 #PyEphem
 
 ##TODO
-#start/stop doesn't work
-#getting errors in makeimg
+#getting errors in makeimg, because the folder is seeing the image files
+###either move image files to a different folder or ignore that extension
 #25 tweets per 15 minute rate limit check + rain/wind check
 #verification
 #code convention
@@ -217,12 +217,13 @@ def check_running():
 	prev_set_time = datetime.strptime(str(previous_set), fmt)
 	prev_rise_time = datetime.strptime(str(previous_rise), fmt)
 	
-	if running:
-		#this isn't working
-		if (utc_to_local(prev_rise_time).day == utc_to_local(now).day) & \
+	if running:	
+		if (utc_to_local(prev_rise_time).day > utc_to_local(prev_set_time).day) & \
+		(utc_to_local(next_rise_time).day > utc_to_local(next_set_time).day) & \
 		(now >= prev_rise_time) & \
 		(now <= next_set_time):
 			stop_tseep()
+			running = False
 	else:
 		if (utc_to_local(prev_set_time).day == utc_to_local(now).day) & \
 		(now >= prev_set_time) & \
