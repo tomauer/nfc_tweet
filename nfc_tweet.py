@@ -130,6 +130,7 @@ def callme():
 	
 	if waitTime != None:
 		waitTime.cancel()
+		existing = os.listdir(callpath)
 		waitTime = None
 	
 	checkTime = threading.Timer(15.0, callme)
@@ -153,14 +154,23 @@ def callme():
 		
 		acton = set(os.listdir(callpath)) - set(existing)
 		
-		print len(acton)
-		tweet(acton)
-		tweets+=len(acton)
-		existing = os.listdir(callpath)
+		if len(action) >=15:
+			print 'Too many tweets at once.'
+			
+			status = api.PostUpdate("Taking a break. Too many birds, too much wind, too much background noise, or it's raining. Back in 15 minutes!")
+			
+			timer15 = 0
+			tweets = 0
+			
+			waitTime = threading.Timer(900.0, callme)
+			waitTime.start()
+		else:
+			print len(acton)
+			tweet(acton)
+			tweets+=len(acton)
+			existing = os.listdir(callpath)
 		
-		
-		
-		if (timer15 < 900) & (tweets >= 21):
+		if (timer15 < 900) & (tweets >= 22):
 			print 'Taking a break.'
 			
 			status = api.PostUpdate("Taking a break. Too many birds, too much wind, too much background noise, or it's raining. Back in 15 minutes!")
