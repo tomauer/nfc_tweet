@@ -11,11 +11,12 @@ import pylab
 import soundcloud
 import ephem
 import calendar
+import threading
+import time
 from datetime import datetime, timedelta
 from scipy.io import wavfile
 from matplotlib import cm
 from time import localtime
-
 
 #dependencies
 #pywin32
@@ -30,10 +31,8 @@ from time import localtime
 #PyEphem
 
 ##TODO
-#25 tweets per 15 minute rate limit check + rain/wind check
 #verification
 #code convention
-
 
 if not admin.isUserAdmin():
         admin.runAsAdmin()
@@ -49,6 +48,8 @@ api = ""
 scclient = ""
 timer15 = 0
 tweets = 0
+checkTime = None
+waitTime = None
 
 def parse_file_name(file):
 	sp = file.split("_")
@@ -60,7 +61,7 @@ def parse_file_name(file):
 	else:
 		tz = 'EDT'
 	
-	return sp[0]+" at "+sp[2]+" "+tz+" on "+sp[1]+"."
+	return sp[0]+" at "+sp[2]+" "+tz+" on "+sp[1]+". "
 
 def makeimg(wav):
 	global callpath
@@ -93,10 +94,10 @@ def makeimg(wav):
 	return img_path
 
 def upload_to_soundcloud(wav):
-	print 'heading to soundcloud'
 	global callpath
 	global config
 	global scclient
+	
 	track = scclient.post(
 		'/tracks', 
 		track={
@@ -111,20 +112,27 @@ def upload_to_soundcloud(wav):
 def tweet(tweetset):
 	global callpath
 	global api
+	
 	for f in tweetset:
 		img_path = makeimg(f)
 		wav_path = upload_to_soundcloud(f)
-		status = api.PostMedia("Test tweet with link. " + wav_path,img_path)
+		status = api.PostMedia(parse_file_name(f) + wav_path,img_path)
 
 def callme():
-	print 'calling'
 	global existing
 	global timer15
 	global tweets
-	threading.Timer(5.0, callme).start()
+	global checkTime
+	global waitTime
+	global api
 	
-	print 'timer15'
-	print timer15
+	if waitTime != None:
+		print 'wait not none'
+		waitTime.cancel()
+		waitTime = None
+	
+	checkTime = threading.Timer(5.0, callme)
+	checkTime.start()
 	
 	if timer15 == 900:
 		timer15 = 0
@@ -133,21 +141,29 @@ def callme():
 		timer15+=5
 	
 	if len(existing) != len(os.listdir(callpath)):
-		print 'not equal, action'
+		checkTime.cancel()
+		
 		acton = set(os.listdir(callpath)) - set(existing)
 		tweet(acton)
 		tweets+=len(acton)
 		existing = os.listdir(callpath)
 		
 		if (timer15 < 900) & (tweets >= 21):
-			print 'take a break'
+			status = api.PostUpdate("Taking a break. Too many birds, too much wind, too much background noise, or it's raining. Back in 15 minutes!")
+			
+			timer15 = 0
+			tweets = 0
+			
+			waitTime = threading.Timer(900.0, callme)
+			waitTime.start()
+		else:
+			checkTime = threading.Timer(5.0, callme)
+			checkTime.start()
 
 def start_tseep():
 	global dirpath
 	global scclient
 	global api
-	print 'start'
-	#rename file to stop.txt
 	
 	#auth soundcloud
 	scclient = soundcloud.Client(
@@ -178,8 +194,7 @@ def start_tseep():
 			
 def stop_tseep():
 	global dirpath
-	print 'stop'
-	#rename file to stop.txt
+
 	for filename in os.listdir('C:\\'):
 	    if filename.startswith("go"):
 	        os.rename(os.path.join(dirpath, filename), os.path.join(dirpath, "stop.txt"))
@@ -192,7 +207,6 @@ def utc_to_local(utc_dt):
     return local_dt.replace(microsecond=utc_dt.microsecond)
 	
 def check_running():
-	print 'check running'
 	global running
 	
 	now = datetime.utcnow()
