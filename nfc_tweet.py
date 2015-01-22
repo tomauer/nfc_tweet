@@ -101,7 +101,7 @@ def upload_to_soundcloud(wav):
 	track = scclient.post(
 		'/tracks', 
 		track={
-			'title': 'This is a sample track',
+			'title': parse_file_name(wav),
 			'sharing': 'public',
 			'asset_data': open(os.path.join(callpath, wav), 'rb')
 			}
@@ -126,29 +126,43 @@ def callme():
 	global waitTime
 	global api
 	
+	print 'Looking for new noises.'
+	
 	if waitTime != None:
-		print 'wait not none'
 		waitTime.cancel()
 		waitTime = None
 	
-	checkTime = threading.Timer(5.0, callme)
+	checkTime = threading.Timer(15.0, callme)
 	checkTime.start()
 	
 	if timer15 == 900:
 		timer15 = 0
 		tweets = 0
 	else:
-		timer15+=5
+		timer15+=15
+	
+	print 'Time'
+	print timer15
+	print 'Tweets'
+	print tweets
 	
 	if len(existing) != len(os.listdir(callpath)):
+		print 'New noises!'
+		
 		checkTime.cancel()
 		
 		acton = set(os.listdir(callpath)) - set(existing)
+		
+		print len(acton)
 		tweet(acton)
 		tweets+=len(acton)
 		existing = os.listdir(callpath)
 		
+		
+		
 		if (timer15 < 900) & (tweets >= 21):
+			print 'Taking a break.'
+			
 			status = api.PostUpdate("Taking a break. Too many birds, too much wind, too much background noise, or it's raining. Back in 15 minutes!")
 			
 			timer15 = 0
@@ -157,13 +171,15 @@ def callme():
 			waitTime = threading.Timer(900.0, callme)
 			waitTime.start()
 		else:
-			checkTime = threading.Timer(5.0, callme)
+			checkTime = threading.Timer(15.0, callme)
 			checkTime.start()
 
 def start_tseep():
 	global dirpath
 	global scclient
 	global api
+	
+	print 'Start tseep.'
 	
 	#auth soundcloud
 	scclient = soundcloud.Client(
@@ -194,6 +210,8 @@ def start_tseep():
 			
 def stop_tseep():
 	global dirpath
+	
+	print "Stop tseep."
 
 	for filename in os.listdir('C:\\'):
 	    if filename.startswith("go"):
@@ -208,6 +226,8 @@ def utc_to_local(utc_dt):
 	
 def check_running():
 	global running
+	
+	print "Checking running status."
 	
 	now = datetime.utcnow()
 
