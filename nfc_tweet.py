@@ -154,7 +154,7 @@ def callme():
 		
 		acton = set(os.listdir(callpath)) - set(existing)
 		
-		if len(action) >=15:
+		if len(acton) >=15:
 			print 'Too many tweets at once.'
 			
 			status = api.PostUpdate("Taking a break. Too many birds, too much wind, too much background noise, or it's raining. Back in 15 minutes!")
