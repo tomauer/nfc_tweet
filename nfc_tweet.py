@@ -128,61 +128,74 @@ def callme():
 	
 	print 'Looking for new noises.'
 	
-	if waitTime != None:
-		waitTime.cancel()
-		existing = os.listdir(callpath)
-		waitTime = None
-	
-	checkTime = threading.Timer(15.0, callme)
-	checkTime.start()
-	
-	if timer15 == 900:
-		timer15 = 0
-		tweets = 0
-	else:
-		timer15+=15
-	
-	print 'Time'
-	print timer15
-	print 'Tweets'
-	print tweets
-	
-	if len(existing) != len(os.listdir(callpath)):
-		print 'New noises!'
-		
-		checkTime.cancel()
-		
-		acton = set(os.listdir(callpath)) - set(existing)
-		
-		if len(acton) >=15:
-			print 'Too many tweets at once.'
-			
-			status = api.PostUpdate("Taking a break. Too many birds, too much wind, too much background noise, or it's raining. Back in 15 minutes!")
-			
-			timer15 = 0
-			tweets = 0
-			
-			waitTime = threading.Timer(900.0, callme)
-			waitTime.start()
-		else:
-			print len(acton)
-			tweet(acton)
-			tweets+=len(acton)
+	if running:
+		if waitTime != None:
+			waitTime.cancel()
 			existing = os.listdir(callpath)
+			waitTime = None
 		
-		if (timer15 < 900) & (tweets >= 22):
-			print 'Taking a break.'
-			
-			status = api.PostUpdate("Taking a break. Too many birds, too much wind, too much background noise, or it's raining. Back in 15 minutes!")
-			
+		checkTime = threading.Timer(15.0, callme)
+		checkTime.start()
+		
+		if timer15 == 900:
 			timer15 = 0
 			tweets = 0
-			
-			waitTime = threading.Timer(900.0, callme)
-			waitTime.start()
 		else:
-			checkTime = threading.Timer(15.0, callme)
-			checkTime.start()
+			timer15+=15
+		
+		print 'Time'
+		print timer15
+		print 'Tweets'
+		print tweets
+		
+		if len(existing) != len(os.listdir(callpath)):
+			print 'New noises!'
+			
+			checkTime.cancel()
+			
+			acton = set(os.listdir(callpath)) - set(existing)
+			
+			if len(acton) >= 15:
+				print 'Too many tweets at once.'
+				
+				lt = localtime()
+				
+				status = api.PostUpdate("Taking a break at " + time.strftime('%H:%M:%S', lt) + ". Too many birds, too much wind, too much background noise, or it's raining. Back in 15 minutes!")
+				
+				timer15 = 0
+				tweets = 0
+				
+				waitTime = threading.Timer(900.0, callme)
+				waitTime.start()
+			else:
+				print 'Tweeting'
+				print len(acton)
+				tweet(acton)
+				tweets+=len(acton)
+				existing = os.listdir(callpath)
+			
+				if (timer15 < 900) & (tweets >= 22):
+					print 'Taking a break.'
+					
+					lt = localtime()
+				
+					status = api.PostUpdate("Taking a break at " + time.strftime('%H:%M:%S', lt) + ". Too many birds, too much wind, too much background noise, or it's raining. Back in 15 minutes!")
+				
+					print 'posted update'
+					
+					timer15 = 0
+					tweets = 0
+					
+					print 'reset to 0'
+					
+					waitTime = threading.Timer(900.0, callme)
+					waitTime.start()
+					
+					print 'starting waittime'
+				else:
+					print 'Waiting 15 seconds'
+					checkTime = threading.Timer(15.0, callme)
+					checkTime.start()
 
 def start_tseep():
 	global dirpath
