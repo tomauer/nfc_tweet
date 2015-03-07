@@ -14,6 +14,7 @@ import ephem
 import calendar
 import threading
 import time
+import requests
 from datetime import datetime, timedelta
 from scipy.io import wavfile
 from matplotlib import cm
@@ -44,6 +45,7 @@ dirpath = 'C:\\'
 existing = os.listdir(callpath)
 
 running = False
+internet_up = False
 
 api = ""
 scclient = ""
@@ -164,7 +166,12 @@ def callme():
 			
 			lt = localtime()
 			
-			status = api.PostUpdate("Taking a break at " + time.strftime('%H:%M:%S', lt) + ". Too many birds, too much wind, too much background noise, or it's raining. Back in 15 minutes!")
+			try:
+				status = api.PostUpdate("Taking a break at " + time.strftime('%H:%M:%S', lt) + ". Too many birds, too much wind, too much background noise, or it's raining. Back in 15 minutes!")
+			except ConnectionError:
+				internet_up = False
+			else:
+				print "when does this happen"
 			
 			timer15 = 0
 			tweets = 0
@@ -174,7 +181,13 @@ def callme():
 		else:
 			print 'Tweeting'
 			print len(acton)
-			tweet(acton)
+			try:
+				tweet(acton)
+			except ConnectionError:
+				internet_up = False
+			else:
+				print 'when does this happen'
+				
 			tweets+=len(acton)
 			existing = os.listdir(callpath)
 		
@@ -183,7 +196,12 @@ def callme():
 				
 				lt = localtime()
 			
-				status = api.PostUpdate("Taking a break at " + time.strftime('%H:%M:%S', lt) + ". Too many birds, too much wind, too much background noise, or it's raining. Back in 15 minutes!")
+				try:
+					status = api.PostUpdate("Taking a break at " + time.strftime('%H:%M:%S', lt) + ". Too many birds, too much wind, too much background noise, or it's raining. Back in 15 minutes!")
+				except ConnectionError:
+					internet_up = False
+				else:
+					print 'when does this happen'
 			
 				print 'posted update'
 				
@@ -206,38 +224,46 @@ def start_tseep():
 	global scclient
 	global api
 	global existing
+	global running
 	
 	print 'Start tseep.'
 	
-	#auth soundcloud
-	scclient = soundcloud.Client(
-		client_id=config.client_id,
-		client_secret=config.client_secret,
-		username=config.username,
-		password=config.password
-	)
+	try:
+		#auth soundcloud
+		scclient = soundcloud.Client(
+			client_id=config.client_id,
+			client_secret=config.client_secret,
+			username=config.username,
+			password=config.password
+		)
 
-	#auth twitter
-	api = twitter.Api(
-		consumer_key=config.consumer_key, 
-		consumer_secret=config.consumer_secret, 
-		access_token_key=config.access_token_key, 
-		access_token_secret=config.access_token_secret
-	)
+		#auth twitter
+		api = twitter.Api(
+			consumer_key=config.consumer_key, 
+			consumer_secret=config.consumer_secret, 
+			access_token_key=config.access_token_key, 
+			access_token_secret=config.access_token_secret
+		)
+	except requests.exceptions.ConnectionError as e:
+		print 'internet down, cant start'
+		running = False
+	else:
+		print 'internet is up'
+		running = True
+		
+		print api.VerifyCredentials()
 	
-	print api.VerifyCredentials()
+		for filename in os.listdir('C:\\'):
+			if filename.startswith("stop"):
+				os.rename(os.path.join(dirpath, filename), os.path.join(dirpath, "go.txt"))
+				
+		os.startfile(r"C:\My Recordings\Tseep-r.exe")
+		#os.startfile(r"C:\My Recordings\Thrush-r.exe")
+		
+		existing = os.listdir(callpath)
+		
+		callme()
 	
-	for filename in os.listdir('C:\\'):
-		if filename.startswith("stop"):
-			os.rename(os.path.join(dirpath, filename), os.path.join(dirpath, "go.txt"))
-			
-	os.startfile(r"C:\My Recordings\Tseep-r.exe")
-	#os.startfile(r"C:\My Recordings\Thrush-r.exe")
-	
-	existing = os.listdir(callpath)
-	
-	callme()
-			
 def stop_tseep():
 	global dirpath
 	global waitTime
@@ -246,8 +272,6 @@ def stop_tseep():
 	
 	print "Stop tseep."
 	
-	
-
 	for filename in os.listdir('C:\\'):
 	    if filename.startswith("go"):
 	        os.rename(os.path.join(dirpath, filename), os.path.join(dirpath, "stop.txt"))
@@ -260,6 +284,8 @@ def stop_tseep():
 	if checkTime != None:
 		checkTime.cancel()
 		checkTime = None
+		
+	running = False
 	
 def utc_to_local(utc_dt):
     # get integer timestamp to avoid precision lost
@@ -301,13 +327,11 @@ def check_running():
 		(now >= prev_rise_time) & \
 		(now <= next_set_time):
 			stop_tseep()
-			running = False
 	else:
 		if (utc_to_local(prev_set_time).day == utc_to_local(now).day) & \
 		(now >= prev_set_time) & \
 		(now <= next_rise_time):
 			start_tseep()
-			running = True
 
 def check_time():
 	threading.Timer(60.0, check_time).start()
@@ -315,3 +339,4 @@ def check_time():
 	check_running()
 
 check_time()
+start_tseep()
