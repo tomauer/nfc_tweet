@@ -130,8 +130,36 @@ def callme():
 	global checkTime
 	global waitTime
 	global api
+	global scclient
+	global internet_up
 	
 	print 'Looking for new noises.'
+	
+	if internet_up == False:
+		lt = localtime()
+	
+		try:
+			#auth soundcloud
+			scclient = soundcloud.Client(
+				client_id=config.client_id,
+				client_secret=config.client_secret,
+				username=config.username,
+				password=config.password
+			)
+
+			#auth twitter
+			api = twitter.Api(
+				consumer_key=config.consumer_key, 
+				consumer_secret=config.consumer_secret, 
+				access_token_key=config.access_token_key, 
+				access_token_secret=config.access_token_secret
+			)
+		
+			status = api.PostUpdate("Internet is back online at " + time.strftime('%H:%M:%S', lt) + ".")
+		except requests.exceptions.ConnectionError as e:
+			internet_up = False
+		else:
+			internet_up = True
 	
 	if waitTime != None:
 		waitTime.cancel()
@@ -152,9 +180,7 @@ def callme():
 	print 'Tweets'
 	print tweets
 	
-	# need to catch ConnectionError
-	
-	if len(existing) != len(os.listdir(callpath)):
+	if (len(existing) != len(os.listdir(callpath))) and internet_up == True:
 		print 'New noises!'
 		
 		checkTime.cancel()
@@ -168,11 +194,9 @@ def callme():
 			
 			try:
 				status = api.PostUpdate("Taking a break at " + time.strftime('%H:%M:%S', lt) + ". Too many birds, too much wind, too much background noise, or it's raining. Back in 15 minutes!")
-			except ConnectionError:
+			except requests.exceptions.ConnectionError as e:
 				internet_up = False
-			else:
-				print "when does this happen"
-			
+		
 			timer15 = 0
 			tweets = 0
 			
@@ -183,13 +207,11 @@ def callme():
 			print len(acton)
 			try:
 				tweet(acton)
-			except ConnectionError:
+			except requests.exceptions.ConnectionError as e:
 				internet_up = False
 			else:
-				print 'when does this happen'
-				
-			tweets+=len(acton)
-			existing = os.listdir(callpath)
+				tweets+=len(acton)
+				existing = os.listdir(callpath)
 		
 			if (timer15 < 900) & (tweets >= 24):
 				print 'Taking a break.'
@@ -198,7 +220,7 @@ def callme():
 			
 				try:
 					status = api.PostUpdate("Taking a break at " + time.strftime('%H:%M:%S', lt) + ". Too many birds, too much wind, too much background noise, or it's raining. Back in 15 minutes!")
-				except ConnectionError:
+				except requests.exceptions.ConnectionError as e:
 					internet_up = False
 				else:
 					print 'when does this happen'
@@ -225,6 +247,7 @@ def start_tseep():
 	global api
 	global existing
 	global running
+	global internet_up
 	
 	print 'Start tseep.'
 	
@@ -250,6 +273,7 @@ def start_tseep():
 	else:
 		print 'internet is up'
 		running = True
+		internet_up = True
 		
 		print api.VerifyCredentials()
 	
