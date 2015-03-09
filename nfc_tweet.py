@@ -209,6 +209,8 @@ def callme():
 				tweet(acton)
 			except requests.exceptions.ConnectionError as e:
 				internet_up = False
+			except HTTPError as he:
+				internet_up = False
 			else:
 				tweets+=len(acton)
 				existing = os.listdir(callpath)
@@ -308,8 +310,6 @@ def stop_tseep():
 	if checkTime != None:
 		checkTime.cancel()
 		checkTime = None
-		
-	running = False
 	
 def utc_to_local(utc_dt):
     # get integer timestamp to avoid precision lost
@@ -351,6 +351,7 @@ def check_running():
 		(now >= prev_rise_time) & \
 		(now <= next_set_time):
 			stop_tseep()
+			running = False
 	else:
 		if (utc_to_local(prev_set_time).day == utc_to_local(now).day) & \
 		(now >= prev_set_time) & \
