@@ -284,12 +284,12 @@ def start_tseep():
 				os.rename(os.path.join(dirpath, filename), os.path.join(dirpath, "go.txt"))
 				
 		os.startfile(r"C:\My Recordings\Tseep-r.exe")
-		#os.startfile(r"C:\My Recordings\Thrush-r.exe")
+		os.startfile(r"C:\My Recordings\Thrush-r.exe")
 		
 		existing = os.listdir(callpath)
 		
-		callme()
-	
+		callme()	
+		
 def stop_tseep():
 	global dirpath
 	global waitTime
@@ -321,7 +321,7 @@ def utc_to_local(utc_dt):
 def check_running():
 	global running
 	
-	#print "Checking running status."
+	print "Checking running status."
 	
 	now = datetime.utcnow()
 
@@ -364,4 +364,3 @@ def check_time():
 	check_running()
 
 check_time()
-start_tseep()
