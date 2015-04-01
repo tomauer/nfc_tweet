@@ -154,9 +154,14 @@ def check_running():
 	prev_set_time = datetime.strptime(str(previous_set), fmt)
 	prev_rise_time = datetime.strptime(str(previous_rise), fmt)
 	
+	next_set_time_tt = utc_to_local(next_set_time).timetuple()
+	next_rise_time_tt = utc_to_local(next_rise_time).timetuple()
+	prev_set_time_tt = utc_to_local(prev_set_time).timetuple()
+	prev_rise_time_tt = utc_to_local(prev_rise_time).timetuple()
+	
 	if running:	
-		if (utc_to_local(prev_rise_time).day > utc_to_local(prev_set_time).day) & \
-		(utc_to_local(next_rise_time).day > utc_to_local(next_set_time).day) & \
+		if (prev_rise_time_tt.tm_yday > prev_set_time_tt.tm_yday) & \
+		(next_rise_time_tt.tm_yday > next_set_time_tt.tm_yday) & \
 		(now >= prev_rise_time) & \
 		(now <= next_set_time):
 			stop()
@@ -173,4 +178,3 @@ def check_time():
 	check_running()
 
 check_time()
-start()
