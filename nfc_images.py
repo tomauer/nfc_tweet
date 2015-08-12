@@ -91,6 +91,7 @@ def makeimg(wav):
 def callme():
 	global existing
 	global checkTime
+	global callpath
 	
 	print 'Looking for new noises.'
 
@@ -168,7 +169,7 @@ def check_running():
 	ri.lon = '-71.61'
 	ri.elev = 10
 	ri.pressure = 0
-	ri.horizon = '-18'
+	ri.horizon = '-6'
 	ri.date = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 	
 	previous_set = ri.previous_setting(ephem.Sun(), use_center=True)
